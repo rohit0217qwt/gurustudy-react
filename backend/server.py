@@ -352,6 +352,19 @@ async def delete_course(course_id: str, admin: User = Depends(get_admin_user)):
         raise HTTPException(status_code=404, detail="Course not found")
     return {"message": "Course deleted successfully"}
 
+@api_router.put("/admin/courses/{course_id}")
+async def update_course(course_id: str, course: CourseCreate, admin: User = Depends(get_admin_user)):
+    existing = await db.courses.find_one({"id": course_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    update_data = course.model_dump()
+    await db.courses.update_one({"id": course_id}, {"$set": update_data})
+    
+    updated = await db.courses.find_one({"id": course_id}, {"_id": 0})
+    updated['created_at'] = datetime.fromisoformat(updated['created_at'])
+    return Course(**updated)
+
 # User endpoints
 @api_router.get("/user/assessments", response_model=List[Assessment])
 async def get_user_assessments(current_user: User = Depends(get_current_user)):

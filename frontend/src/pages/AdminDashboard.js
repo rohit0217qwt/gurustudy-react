@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../App';
 import axios from 'axios';
 import Header from '../components/Header';
-import { Plus, Users, FileText, Calendar, Upload, LayoutDashboard, ChevronLeft, ChevronRight, ClipboardList, BookOpen, Search, Image, ArrowLeft } from 'lucide-react';
+import { Plus, Users, FileText, Calendar, Upload, LayoutDashboard, ChevronLeft, ChevronRight, ClipboardList, BookOpen, Search, ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -26,10 +26,11 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
 
   // Course state
-  const [courseView, setCourseView] = useState('list'); // 'list' or 'create'
-  const [courseFilter, setCourseFilter] = useState('all'); // 'all', 'active', 'disabled'
+  const [courseView, setCourseView] = useState('list'); // 'list', 'create', or 'edit'
+  const [courseFilter, setCourseFilter] = useState('all');
   const [courseSearch, setCourseSearch] = useState('');
   const [newCourse, setNewCourse] = useState({ title: '', code: '', description: '', status: 'active' });
+  const [editingCourseId, setEditingCourseId] = useState(null);
 
   const [newAssessment, setNewAssessment] = useState({
     title: '', description: '', version: '', duration_minutes: 60,
@@ -90,6 +91,36 @@ export default function AdminDashboard() {
       await axios.put(`${API}/admin/courses/${courseId}/status`, {}, { headers: { Authorization: `Bearer ${token}` } });
       fetchCourses();
     } catch (e) { alert('Failed to update course status'); }
+  };
+
+  const handleEditCourse = (course) => {
+    setEditingCourseId(course.id);
+    setNewCourse({ title: course.title, code: course.code, description: course.description, status: course.status });
+    setCourseView('edit');
+  };
+
+  const handleUpdateCourse = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/admin/courses/${editingCourseId}`, newCourse, { headers: { Authorization: `Bearer ${token}` } });
+      alert('Course updated successfully');
+      setNewCourse({ title: '', code: '', description: '', status: 'active' });
+      setEditingCourseId(null);
+      setCourseView('list');
+      fetchCourses();
+    } catch (e) { alert('Failed to update course'); }
+    finally { setLoading(false); }
+  };
+
+  const handleDeleteCourse = async (courseId, courseTitle) => {
+    if (!window.confirm(`Are you sure you want to delete "${courseTitle}"? This action cannot be undone.`)) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/admin/courses/${courseId}`, { headers: { Authorization: `Bearer ${token}` } });
+      fetchCourses();
+    } catch (e) { alert('Failed to delete course'); }
   };
 
   const filteredCourses = courses.filter(c => {
@@ -305,8 +336,6 @@ export default function AdminDashboard() {
                       <table className="w-full">
                         <thead className="bg-gray-50 border-b border-gray-200">
                           <tr>
-                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400 w-10"></th>
-                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400 w-16">Image</th>
                             <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Title</th>
                             <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Code</th>
                             <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Description</th>
@@ -314,23 +343,12 @@ export default function AdminDashboard() {
                             <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Date</th>
                             <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Added By</th>
                             <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Status</th>
+                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                           {filteredCourses.map((course, i) => (
                             <tr key={course.id} className="hover:bg-gray-50 transition-colors duration-150" data-testid={`course-row-${i}`}>
-                              <td className="px-4 py-4">
-                                <input type="checkbox" className="w-4 h-4 text-blue-600 rounded-sm border-gray-300" />
-                              </td>
-                              <td className="px-4 py-4">
-                                {course.image_url ? (
-                                  <img src={course.image_url} alt={course.title} className="w-12 h-12 object-cover rounded-sm border border-gray-200" />
-                                ) : (
-                                  <div className="w-12 h-12 bg-gray-100 border border-gray-200 rounded-sm flex items-center justify-center">
-                                    <Image className="w-5 h-5 text-gray-300" />
-                                  </div>
-                                )}
-                              </td>
                               <td className="px-4 py-4 text-sm font-medium text-blue-600">{course.title}</td>
                               <td className="px-4 py-4 text-sm text-gray-500">{course.code}</td>
                               <td className="px-4 py-4 text-sm text-gray-500 max-w-[200px] truncate">{course.description}</td>
@@ -346,6 +364,26 @@ export default function AdminDashboard() {
                                   {course.status === 'active' ? 'Active' : 'Disabled'}
                                 </button>
                               </td>
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleEditCourse(course)}
+                                    className="p-1.5 rounded-sm text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                    title="Edit course"
+                                    data-testid={`edit-course-${i}`}
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteCourse(course.id, course.title)}
+                                    className="p-1.5 rounded-sm text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                    title="Delete course"
+                                    data-testid={`delete-course-${i}`}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -356,19 +394,23 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* ── ADD NEW COURSE ─────────────────── */}
-            {activeTab === 'courses' && courseView === 'create' && (
+            {/* ── ADD / EDIT COURSE ─────────────────── */}
+            {activeTab === 'courses' && (courseView === 'create' || courseView === 'edit') && (
               <div>
                 {/* Header Banner */}
                 <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-sm p-6 sm:p-8 mb-8">
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="text-xs font-mono uppercase tracking-[0.15em] text-slate-300 mb-2">Course Workspace</div>
-                      <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-2" style={{fontFamily:'Outfit,sans-serif'}} data-testid="add-course-heading">Add New Course</h2>
-                      <p className="text-sm text-slate-300">Create a course container for quizzes, reports, and question management.</p>
+                      <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-2" style={{fontFamily:'Outfit,sans-serif'}} data-testid="add-course-heading">
+                        {courseView === 'edit' ? 'Edit Course' : 'Add New Course'}
+                      </h2>
+                      <p className="text-sm text-slate-300">
+                        {courseView === 'edit' ? 'Update course details below.' : 'Create a course container for quizzes, reports, and question management.'}
+                      </p>
                     </div>
                     <button
-                      onClick={() => setCourseView('list')}
+                      onClick={() => { setCourseView('list'); setEditingCourseId(null); setNewCourse({ title: '', code: '', description: '', status: 'active' }); }}
                       className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm px-4 py-2 rounded-sm transition-colors"
                       data-testid="back-to-courses-button"
                     >
@@ -377,9 +419,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Create Form */}
+                {/* Form */}
                 <div className="bg-white border border-gray-200 rounded-sm p-6 sm:p-8">
-                  <form onSubmit={handleCreateCourse} className="space-y-6" data-testid="create-course-form">
+                  <form onSubmit={courseView === 'edit' ? handleUpdateCourse : handleCreateCourse} className="space-y-6" data-testid="create-course-form">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2">
@@ -435,7 +477,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-end gap-4 pt-4">
                       <button
                         type="button"
-                        onClick={() => setCourseView('list')}
+                        onClick={() => { setCourseView('list'); setEditingCourseId(null); setNewCourse({ title: '', code: '', description: '', status: 'active' }); }}
                         className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-6 py-3 rounded-sm transition-colors"
                         data-testid="cancel-course-button"
                       >
@@ -447,7 +489,7 @@ export default function AdminDashboard() {
                         className="bg-slate-700 hover:bg-slate-800 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm px-6 py-3 rounded-sm transition-colors"
                         data-testid="submit-course-button"
                       >
-                        {loading ? 'Submitting...' : 'Submit'}
+                        {loading ? 'Saving...' : courseView === 'edit' ? 'Update' : 'Submit'}
                       </button>
                     </div>
                   </form>
