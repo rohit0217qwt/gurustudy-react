@@ -286,6 +286,87 @@ class AssessmentPlatformTester:
             self.log_test("Get User Registrations", False, f"Status: {status}, Data: {data}")
             return False
 
+    def test_create_course(self):
+        """Test creating a course"""
+        if not self.admin_token:
+            self.log_test("Create Course", False, "No admin token")
+            return False, None
+
+        course_data = {
+            "title": "Test Cybersecurity Course",
+            "code": "CYB-101",
+            "description": "A comprehensive course covering cybersecurity fundamentals",
+            "status": "active"
+        }
+
+        success, data, status = self.make_request(
+            'POST', 
+            'admin/courses', 
+            course_data, 
+            token=self.admin_token
+        )
+        
+        if success and 'id' in data:
+            self.log_test("Create Course", True)
+            return True, data['id']
+        else:
+            self.log_test("Create Course", False, f"Status: {status}, Data: {data}")
+            return False, None
+
+    def test_get_courses_admin(self):
+        """Test getting all courses as admin"""
+        if not self.admin_token:
+            self.log_test("Get Courses (Admin)", False, "No admin token")
+            return False
+
+        success, data, status = self.make_request('GET', 'admin/courses', token=self.admin_token)
+        
+        if success and isinstance(data, list):
+            self.log_test("Get Courses (Admin)", True)
+            return True
+        else:
+            self.log_test("Get Courses (Admin)", False, f"Status: {status}, Data: {data}")
+            return False
+
+    def test_toggle_course_status(self, course_id: str):
+        """Test toggling course status"""
+        if not self.admin_token or not course_id:
+            self.log_test("Toggle Course Status", False, "No admin token or course ID")
+            return False
+
+        success, data, status = self.make_request(
+            'PUT', 
+            f'admin/courses/{course_id}/status', 
+            {}, 
+            token=self.admin_token
+        )
+        
+        if success and 'status' in data:
+            self.log_test("Toggle Course Status", True)
+            return True
+        else:
+            self.log_test("Toggle Course Status", False, f"Status: {status}, Data: {data}")
+            return False
+
+    def test_delete_course(self, course_id: str):
+        """Test deleting a course"""
+        if not self.admin_token or not course_id:
+            self.log_test("Delete Course", False, "No admin token or course ID")
+            return False
+
+        success, data, status = self.make_request(
+            'DELETE', 
+            f'admin/courses/{course_id}', 
+            token=self.admin_token
+        )
+        
+        if success and 'message' in data:
+            self.log_test("Delete Course", True)
+            return True
+        else:
+            self.log_test("Delete Course", False, f"Status: {status}, Data: {data}")
+            return False
+
     def test_contact_form(self):
         """Test contact form submission"""
         contact_data = {
@@ -334,12 +415,20 @@ class AssessmentPlatformTester:
         # Admin functionality tests
         print("\n📋 Admin Functionality Tests:")
         assessment_id = None
+        course_id = None
         if admin_login_success:
             success, assessment_id = self.test_create_assessment()
             self.test_get_assessments_admin()
             if assessment_id:
                 self.test_bulk_register(assessment_id)
             self.test_get_registrations_admin()
+            
+            # Course tests
+            success, course_id = self.test_create_course()
+            self.test_get_courses_admin()
+            if course_id:
+                self.test_toggle_course_status(course_id)
+                # Note: We don't delete the course here to keep it for frontend testing
 
         # Student functionality tests
         print("\n📋 Student Functionality Tests:")

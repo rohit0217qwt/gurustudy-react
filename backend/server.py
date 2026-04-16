@@ -101,6 +101,25 @@ class AssessmentSubmission(BaseModel):
     assessment_id: str
     answers: List[int]  # indices of selected options
 
+class Course(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    title: str
+    code: str
+    description: str
+    image_url: Optional[str] = None
+    total_quiz: int = 0
+    status: str = "active"  # active or disabled
+    added_by: str = ""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CourseCreate(BaseModel):
+    title: str
+    code: str
+    description: str
+    image_url: Optional[str] = None
+    status: str = "active"
+
 class ContactForm(BaseModel):
     name: str
     email: EmailStr
@@ -291,6 +310,47 @@ async def get_all_registrations(admin: User = Depends(get_admin_user)):
         if isinstance(reg['exam_date'], str):
             reg['exam_date'] = datetime.fromisoformat(reg['exam_date'])
     return registrations
+
+# Course endpoints (Admin)
+@api_router.post("/admin/courses", response_model=Course)
+async def create_course(course: CourseCreate, admin: User = Depends(get_admin_user)):
+    import uuid
+    course_id = str(uuid.uuid4())
+    
+    course_doc = course.model_dump()
+    course_doc['id'] = course_id
+    course_doc['total_quiz'] = 0
+    course_doc['added_by'] = admin.name
+    course_doc['created_at'] = datetime.now(timezone.utc).isoformat()
+    
+    await db.courses.insert_one(course_doc)
+    
+    return Course(**course_doc)
+
+@api_router.get("/admin/courses", response_model=List[Course])
+async def get_all_courses(admin: User = Depends(get_admin_user)):
+    courses = await db.courses.find({}, {"_id": 0}).to_list(1000)
+    for course in courses:
+        course['created_at'] = datetime.fromisoformat(course['created_at'])
+    return courses
+
+@api_router.put("/admin/courses/{course_id}/status")
+async def toggle_course_status(course_id: str, admin: User = Depends(get_admin_user)):
+    course = await db.courses.find_one({"id": course_id}, {"_id": 0})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    new_status = "disabled" if course["status"] == "active" else "active"
+    await db.courses.update_one({"id": course_id}, {"$set": {"status": new_status}})
+    
+    return {"message": f"Course status updated to {new_status}", "status": new_status}
+
+@api_router.delete("/admin/courses/{course_id}")
+async def delete_course(course_id: str, admin: User = Depends(get_admin_user)):
+    result = await db.courses.delete_one({"id": course_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"message": "Course deleted successfully"}
 
 # User endpoints
 @api_router.get("/user/assessments", response_model=List[Assessment])

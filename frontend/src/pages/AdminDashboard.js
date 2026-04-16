@@ -2,13 +2,14 @@ import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../App';
 import axios from 'axios';
 import Header from '../components/Header';
-import { Plus, Users, FileText, Calendar, Upload, LayoutDashboard, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react';
+import { Plus, Users, FileText, Calendar, Upload, LayoutDashboard, ChevronLeft, ChevronRight, ClipboardList, BookOpen, Search, Image, ArrowLeft } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const menuItems = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { key: 'courses', label: 'Courses', icon: BookOpen },
   { key: 'assessments', label: 'Assessments', icon: FileText },
   { key: 'create', label: 'Create Assessment', icon: Plus },
   { key: 'bulk-register', label: 'Bulk Register', icon: Upload },
@@ -21,7 +22,14 @@ export default function AdminDashboard() {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [assessments, setAssessments] = useState([]);
   const [registrations, setRegistrations] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Course state
+  const [courseView, setCourseView] = useState('list'); // 'list' or 'create'
+  const [courseFilter, setCourseFilter] = useState('all'); // 'all', 'active', 'disabled'
+  const [courseSearch, setCourseSearch] = useState('');
+  const [newCourse, setNewCourse] = useState({ title: '', code: '', description: '', status: 'active' });
 
   const [newAssessment, setNewAssessment] = useState({
     title: '', description: '', version: '', duration_minutes: 60,
@@ -35,6 +43,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (activeTab === 'overview' || activeTab === 'assessments') fetchAssessments();
     if (activeTab === 'overview' || activeTab === 'candidates') fetchRegistrations();
+    if (activeTab === 'overview' || activeTab === 'courses') fetchCourses();
   }, [activeTab]);
 
   const fetchAssessments = async () => {
@@ -52,6 +61,42 @@ export default function AdminDashboard() {
       setRegistrations(res.data);
     } catch (e) { console.error('Failed to fetch registrations:', e); }
   };
+
+  const fetchCourses = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API}/admin/courses`, { headers: { Authorization: `Bearer ${token}` } });
+      setCourses(res.data);
+    } catch (e) { console.error('Failed to fetch courses:', e); }
+  };
+
+  const handleCreateCourse = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/admin/courses`, newCourse, { headers: { Authorization: `Bearer ${token}` } });
+      alert('Course created successfully');
+      setNewCourse({ title: '', code: '', description: '', status: 'active' });
+      setCourseView('list');
+      fetchCourses();
+    } catch (e) { alert('Failed to create course'); }
+    finally { setLoading(false); }
+  };
+
+  const handleToggleCourseStatus = async (courseId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/admin/courses/${courseId}/status`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      fetchCourses();
+    } catch (e) { alert('Failed to update course status'); }
+  };
+
+  const filteredCourses = courses.filter(c => {
+    const matchesFilter = courseFilter === 'all' || c.status === courseFilter;
+    const matchesSearch = !courseSearch || c.title.toLowerCase().includes(courseSearch.toLowerCase()) || c.code.toLowerCase().includes(courseSearch.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   const handleCreateAssessment = async (e) => {
     e.preventDefault();
@@ -213,6 +258,199 @@ export default function AdminDashboard() {
                       <Upload className="w-5 h-5 text-green-600" /><span className="text-gray-700">Bulk Register Candidates</span>
                     </button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── COURSES ───────────────────────── */}
+            {activeTab === 'courses' && courseView === 'list' && (
+              <div>
+                {/* Filter bar */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-1 text-sm">
+                    <button onClick={() => setCourseFilter('all')} className={`px-2 py-1 rounded-sm transition-colors ${courseFilter === 'all' ? 'text-gray-900 font-semibold' : 'text-blue-600 hover:text-blue-700'}`} data-testid="course-filter-all">
+                      All({courses.length})
+                    </button>
+                    <span className="text-gray-300">|</span>
+                    <button onClick={() => setCourseFilter('active')} className={`px-2 py-1 rounded-sm transition-colors ${courseFilter === 'active' ? 'text-gray-900 font-semibold' : 'text-blue-600 hover:text-blue-700'}`} data-testid="course-filter-active">
+                      Active({courses.filter(c => c.status === 'active').length})
+                    </button>
+                    <span className="text-gray-300">|</span>
+                    <button onClick={() => setCourseFilter('disabled')} className={`px-2 py-1 rounded-sm transition-colors ${courseFilter === 'disabled' ? 'text-gray-900 font-semibold' : 'text-blue-600 hover:text-blue-700'}`} data-testid="course-filter-disabled">
+                      Disabled({courses.filter(c => c.status === 'disabled').length})
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center border border-gray-200 rounded-sm overflow-hidden">
+                      <input type="text" value={courseSearch} onChange={e => setCourseSearch(e.target.value)} placeholder="Enter title or code" className="bg-white text-gray-900 text-sm px-3 py-2 outline-none w-48" data-testid="course-search-input" />
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 transition-colors" data-testid="course-search-button">
+                        <Search className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <button onClick={() => setCourseView('create')} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-sm transition-colors" data-testid="add-course-button">
+                      <Plus className="w-4 h-4" /> Add Course
+                    </button>
+                  </div>
+                </div>
+
+                {/* Items count */}
+                <div className="text-sm text-gray-500 mb-3 text-right">{filteredCourses.length} items</div>
+
+                {/* Course Table */}
+                <div className="bg-white border border-gray-200 rounded-sm overflow-hidden">
+                  {filteredCourses.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">No courses found.</div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400 w-10"></th>
+                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400 w-16">Image</th>
+                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Title</th>
+                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Code</th>
+                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Description</th>
+                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Total Quiz</th>
+                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Date</th>
+                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Added By</th>
+                            <th className="text-left px-4 py-3 text-xs font-mono uppercase tracking-wider text-gray-400">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {filteredCourses.map((course, i) => (
+                            <tr key={course.id} className="hover:bg-gray-50 transition-colors duration-150" data-testid={`course-row-${i}`}>
+                              <td className="px-4 py-4">
+                                <input type="checkbox" className="w-4 h-4 text-blue-600 rounded-sm border-gray-300" />
+                              </td>
+                              <td className="px-4 py-4">
+                                {course.image_url ? (
+                                  <img src={course.image_url} alt={course.title} className="w-12 h-12 object-cover rounded-sm border border-gray-200" />
+                                ) : (
+                                  <div className="w-12 h-12 bg-gray-100 border border-gray-200 rounded-sm flex items-center justify-center">
+                                    <Image className="w-5 h-5 text-gray-300" />
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-4 py-4 text-sm font-medium text-blue-600">{course.title}</td>
+                              <td className="px-4 py-4 text-sm text-gray-500">{course.code}</td>
+                              <td className="px-4 py-4 text-sm text-gray-500 max-w-[200px] truncate">{course.description}</td>
+                              <td className="px-4 py-4 text-sm text-gray-500 text-center">{course.total_quiz}</td>
+                              <td className="px-4 py-4 text-sm text-gray-500">{new Date(course.created_at).toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                              <td className="px-4 py-4 text-sm font-medium text-gray-700">{course.added_by}</td>
+                              <td className="px-4 py-4">
+                                <button
+                                  onClick={() => handleToggleCourseStatus(course.id)}
+                                  className={`text-sm font-medium capitalize cursor-pointer hover:underline ${course.status === 'active' ? 'text-green-600' : 'text-gray-400'}`}
+                                  data-testid={`course-status-${i}`}
+                                >
+                                  {course.status === 'active' ? 'Active' : 'Disabled'}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── ADD NEW COURSE ─────────────────── */}
+            {activeTab === 'courses' && courseView === 'create' && (
+              <div>
+                {/* Header Banner */}
+                <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-sm p-6 sm:p-8 mb-8">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="text-xs font-mono uppercase tracking-[0.15em] text-slate-300 mb-2">Course Workspace</div>
+                      <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-2" style={{fontFamily:'Outfit,sans-serif'}} data-testid="add-course-heading">Add New Course</h2>
+                      <p className="text-sm text-slate-300">Create a course container for quizzes, reports, and question management.</p>
+                    </div>
+                    <button
+                      onClick={() => setCourseView('list')}
+                      className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm px-4 py-2 rounded-sm transition-colors"
+                      data-testid="back-to-courses-button"
+                    >
+                      <ArrowLeft className="w-4 h-4" /> Back to Course List
+                    </button>
+                  </div>
+                </div>
+
+                {/* Create Form */}
+                <div className="bg-white border border-gray-200 rounded-sm p-6 sm:p-8">
+                  <form onSubmit={handleCreateCourse} className="space-y-6" data-testid="create-course-form">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2">
+                          <FileText className="w-4 h-4 text-slate-600" />
+                          Course Title
+                        </label>
+                        <input
+                          type="text"
+                          value={newCourse.title}
+                          onChange={e => setNewCourse({...newCourse, title: e.target.value})}
+                          required
+                          placeholder="Enter course title"
+                          className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 px-4 py-3 rounded-sm outline-none"
+                          data-testid="course-title-input"
+                        />
+                        <p className="text-xs text-gray-400 mt-1.5">Use a clear title that admins and learners can recognize quickly.</p>
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2">
+                          <BookOpen className="w-4 h-4 text-slate-600" />
+                          Course Code
+                        </label>
+                        <input
+                          type="text"
+                          value={newCourse.code}
+                          onChange={e => setNewCourse({...newCourse, code: e.target.value})}
+                          required
+                          placeholder="Enter course code"
+                          className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 px-4 py-3 rounded-sm outline-none"
+                          data-testid="course-code-input"
+                        />
+                        <p className="text-xs text-gray-400 mt-1.5">A short internal reference such as BIO-101 or SAFETY-02 works well.</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2">
+                        <ClipboardList className="w-4 h-4 text-slate-600" />
+                        Description
+                      </label>
+                      <textarea
+                        value={newCourse.description}
+                        onChange={e => setNewCourse({...newCourse, description: e.target.value})}
+                        required
+                        rows={6}
+                        placeholder="Describe the purpose and scope of this course"
+                        className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 px-4 py-3 rounded-sm outline-none resize-none"
+                        data-testid="course-description-input"
+                      />
+                      <p className="text-xs text-gray-400 mt-1.5">Summarize what this course covers so related quizzes stay organized over time.</p>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setCourseView('list')}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-6 py-3 rounded-sm transition-colors"
+                        data-testid="cancel-course-button"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="bg-slate-700 hover:bg-slate-800 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm px-6 py-3 rounded-sm transition-colors"
+                        data-testid="submit-course-button"
+                      >
+                        {loading ? 'Submitting...' : 'Submit'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             )}
