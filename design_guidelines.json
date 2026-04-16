@@ -1,0 +1,78 @@
+{
+  "theme": "Dark",
+  "archetype": "Archetype 4 (Swiss & High-Contrast)",
+  "color_palette": {
+    "background": "#09090B",
+    "surface": "#18181B",
+    "primary": "#0055FF",
+    "primary_hover": "#0044CC",
+    "secondary": "#27272A",
+    "text_primary": "#FAFAFA",
+    "text_secondary": "#A1A1AA",
+    "border": "#27272A",
+    "accent": "#3B82F6",
+    "error": "#EF4444",
+    "success": "#10B981"
+  },
+  "typography": {
+    "font_family": {
+      "heading": "Outfit, sans-serif",
+      "body": "IBM Plex Sans, sans-serif",
+      "mono": "IBM Plex Mono, monospace"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-zinc-50",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl font-medium tracking-tight text-zinc-50",
+      "h3": "text-xl sm:text-2xl font-medium text-zinc-100",
+      "body": "text-base text-zinc-300 leading-relaxed",
+      "small": "text-sm text-zinc-400",
+      "overline": "text-xs font-mono uppercase tracking-[0.2em] text-blue-500"
+    }
+  },
+  "layout_and_spacing": {
+    "spacing_scale": "Use standard Tailwind scale, prioritize generous padding p-6 to p-12 for generic containers, but keep dashboard widgets dense (p-4 to p-6).",
+    "grid_strategy": "Control Room Grid (Mode B). Tight gaps (gap-4 or gap-6) for dashboards. Use CSS Grid explicitly.",
+    "border_radius": "Sharp/Technical. Use rounded-sm (4px) or rounded-md (6px) maximum. Avoid pills (rounded-full) except for avatars."
+  },
+  "surface_strategies": {
+    "dashboard_cards": "Flat background (bg-zinc-900), 1px subtle border (border-zinc-800), no drop shadow. Hover: slight border color change.",
+    "header": "Solid background bg-zinc-950/90 with backdrop-blur-md, hard bottom border border-zinc-800.",
+    "modals_dialogs": "bg-zinc-900 border border-zinc-800 shadow-2xl. Use standard Shadcn Dialog but apply sharp radii."
+  },
+  "components": {
+    "buttons": "Flat, primary uses bg-blue-600 hover:bg-blue-700 text-white. Secondary uses bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:text-white. Use data-testid attributes.",
+    "tables": "Shadcn Table. Remove zebra striping. Keep it flat. Header uses text-xs uppercase mono for technical feel.",
+    "forms": "Shadcn Form, Input, Select. bg-zinc-950 border-zinc-800 focus:ring-blue-500 focus:border-blue-500.",
+    "tabs": "Shadcn Tabs. Override fixed heights. Active tab should have a strong bottom border (border-b-2 border-blue-500) rather than a pill shape to maintain technical feel."
+  },
+  "icons_and_media": {
+    "icon_library": "lucide-react (Default) or @phosphor-icons/react (Duotone for high-end feel)",
+    "images": [
+      {
+        "category": "hero_background",
+        "url": "https://images.unsplash.com/photo-1691435828932-911a7801adfb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTF8MHwxfHNlYXJjaHwzfHxzZXJ2ZXIlMjByb29tJTIwZGFyayUyMGJsdWV8ZW58MHx8fHwxNzc2MzI3NzI4fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Network wires in a dark blue server room, use with bg-black/60 overlay for the main landing page."
+      },
+      {
+        "category": "about_professionals",
+        "url": "https://images.unsplash.com/photo-1758518731706-be5d5230e5a5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTF8MHwxfHNlYXJjaHwxfHxjb3Jwb3JhdGUlMjBwcm9mZXNzaW9uYWxzJTIwbWVldGluZ3xlbnwwfHx8fDE3NzYzMjc3NDR8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Diverse business team collaborating in a modern office."
+      },
+      {
+        "category": "student_assessment",
+        "url": "https://images.unsplash.com/photo-1527794892110-a9ecebbf4420?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjB1c2luZyUyMGxhcHRvcCUyMGRhcmt8ZW58MHx8fHwxNzc2MzI3NzQzfDA&ixlib=rb-4.1.0&q=85",
+        "description": "Silhouette of man using laptop in the dark, representing focused assessment taking."
+      }
+    ]
+  },
+  "motion_and_interactions": {
+    "hover_states": "Crisp color shifts. Buttons bg-blue-600 to bg-blue-700. Explicitly set text color on hover.",
+    "transitions": "Fast and snappy. transition: all 0.15s ease. No bouncy physics. Needs to feel like a high-performance terminal.",
+    "loading": "Use mono font 'LOADING...' or simple sharp spinner. Avoid playful loaders."
+  },
+  "accessibility": {
+    "contrast": "Ensure minimum 4.5:1 for standard text. All interactive elements MUST have visible focus rings (focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-950).",
+    "testing": "All interactive elements (buttons, links, form inputs) MUST include data-testid attribute in kebab-case."
+  },
+  "instructions_to_main_agent": "Implement a high-contrast, technical dark mode theme. Do not use generic fonts like Inter or Roboto for headings; use Outfit and IBM Plex Sans. Prioritize grid-based layouts (bento box style) for the admin and user assessment dashboards. Ensure heavy use of 1px borders and flat surfaces instead of drop shadows. Forms and data tables must use Shadcn components but override styles to fit the sharp, rounded-sm technical aesthetic. All UI components should feel authoritative, secure, and highly corporate."
+}
