@@ -54,8 +54,8 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-zinc-400 text-sm font-mono uppercase tracking-wider">LOADING...</div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-gray-400 text-sm font-mono uppercase tracking-wider">LOADING...</div>
       </div>
     );
   }

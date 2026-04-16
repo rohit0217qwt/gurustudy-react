@@ -43,18 +43,18 @@ export default function Services() {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <Header />
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="bg-zinc-900 border-b border-zinc-800 py-16">
+        <section className="bg-gray-50 border-b border-gray-200 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-xs font-mono uppercase tracking-[0.2em] text-blue-500 mb-4">Our Services</div>
-            <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-zinc-50 mb-6" style={{fontFamily: 'Outfit, sans-serif'}} data-testid="services-heading">
+            <div className="text-xs font-mono uppercase tracking-[0.2em] text-blue-600 mb-4">Our Services</div>
+            <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-gray-900 mb-6" style={{fontFamily: 'Outfit, sans-serif'}} data-testid="services-heading">
               Professional Cyber Security Services
             </h1>
-            <p className="text-base text-zinc-300 leading-relaxed max-w-3xl">
+            <p className="text-base text-gray-600 leading-relaxed max-w-3xl">
               Comprehensive assessment, training, and certification services designed to meet the highest standards in cyber security education and compliance.
             </p>
           </div>
@@ -69,20 +69,20 @@ export default function Services() {
                 return (
                   <div 
                     key={index}
-                    className="bg-zinc-900 border border-zinc-800 p-6 rounded-sm hover:border-zinc-700 transition-colors duration-150"
+                    className="bg-white border border-gray-200 p-6 rounded-sm hover:border-gray-300 hover:shadow-sm transition-all duration-150"
                     data-testid={`service-${index}`}
                   >
-                    <Icon className="w-10 h-10 text-blue-500 mb-4" />
-                    <h3 className="text-xl font-medium text-zinc-100 mb-3" style={{fontFamily: 'Outfit, sans-serif'}}>
+                    <Icon className="w-10 h-10 text-blue-600 mb-4" />
+                    <h3 className="text-xl font-medium text-gray-900 mb-3" style={{fontFamily: 'Outfit, sans-serif'}}>
                       {service.title}
                     </h3>
-                    <p className="text-sm text-zinc-400 leading-relaxed mb-4">
+                    <p className="text-sm text-gray-500 leading-relaxed mb-4">
                       {service.description}
                     </p>
                     <ul className="space-y-2">
                       {service.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-sm text-zinc-500">
-                          <div className="w-1 h-1 bg-blue-500 rounded-full" />
+                        <li key={idx} className="flex items-center gap-2 text-sm text-gray-400">
+                          <div className="w-1 h-1 bg-blue-600 rounded-full" />
                           {feature}
                         </li>
                       ))}
@@ -95,12 +95,12 @@ export default function Services() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 bg-zinc-900 border-t border-zinc-800">
+        <section className="py-16 bg-gray-50 border-t border-gray-200">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-2xl sm:text-3xl font-medium tracking-tight text-zinc-50 mb-4" style={{fontFamily: 'Outfit, sans-serif'}}>
+            <h2 className="text-2xl sm:text-3xl font-medium tracking-tight text-gray-900 mb-4" style={{fontFamily: 'Outfit, sans-serif'}}>
               Ready to Begin Your Assessment?
             </h2>
-            <p className="text-base text-zinc-400 mb-8">
+            <p className="text-base text-gray-500 mb-8">
               Access our secure assessment platform or contact us to learn more about our services.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -113,7 +113,7 @@ export default function Services() {
               </a>
               <a 
                 href="/contact" 
-                className="inline-flex items-center justify-center gap-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-white text-zinc-300 px-6 py-3 rounded-sm transition-colors duration-150"
+                className="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 px-6 py-3 rounded-sm transition-colors duration-150"
                 data-testid="cta-contact-us"
               >
                 Contact Us
